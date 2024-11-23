@@ -1,5 +1,3 @@
-using LaTeXStrings
-
 function riemann(f::Function, endpoints::Tuple, npoints::Int64)
     a, b = endpoints
     Δx = abs(b - a) / npoints
