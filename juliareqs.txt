@@ -19,5 +19,4 @@ PyCall
 Conda
 Revise
 Arpack@0.5.3
-Runic
 QuadGK
