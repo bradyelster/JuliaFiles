@@ -71,17 +71,31 @@ function plot_bvp(solutions)
             xlabel = L"$x$"  # Ensure the x-axis label is overridden for this plot
         )
     end
-
-    # Save the combined plot
-    savefig(plt, "hw6/Aero_HW6_Prob2.pdf")
     return plt
 end
 
+
 # Main function
 function main()
-    params = BVPParams((0.0, 1.0), [0.1, 0.01], 1, 2)
+    domain = (0.0, 1.0)
+    α = 1
+    β = 2
+    ϵ1 = 0.1
+    ϵ2 = 0.01
+    params = BVPParams(domain, [ϵ1, ϵ2], α, β)
     solutions = solve_bvp(params)
-    plot_bvp(solutions)
+
+    points = collect(LinRange(domain[1], domain[2], 1000))
+    exact(x, ϵ) = β .+ (β.-α.+1).*(exp.(x ./ ϵ) .- 1) .- x.^2
+    asymp1 = exact(points, 0.1)
+    asymp2 = exact(points, 0.01)
+
+
+    fullplot = plot_bvp(solutions)
+    plot!(fullplot, points, [asymp1, asymp2])
+
+    # Save the combined plot
+    savefig(fullplot, "hw6/Aero_HW6_Prob2.pdf")
 end
 
 main()
