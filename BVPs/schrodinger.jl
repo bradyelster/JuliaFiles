@@ -1,33 +1,34 @@
 using BoundaryValueDiffEq
+# using OrdinaryDiffEq
 using Plots
 using LaTeXStrings
 
-L = 20;
-tspan = (-L, L);
+L = 8;
+tspan = (0, L);
 
 function schrodinger!(dψ, ψ, p, t)
     dψ[1] = ψ[2]
-    dψ[2] = (t^2 - 2*p[1]) * ψ[1]
+    dψ[2] = (t^2 - 2 * p[1]) * ψ[1]
 end
 
-# for eigenvalue problems, the solution is only defined up to a multiplicative constant by the boundary conditions
-# to resolve this, specifiy another condition like ψ(0) = 1 to determine eigenvalue (E) uniquely
 function bca!(res, ψ, p)
-    res[1] = ψ[1] 
-    #res[2] = ψ[1] - 1.0 # extra constraint that ψ(0)=1
+    res[1] = ψ[2] # ψ'(0)  = 0 # even parity modes
 end
 
 function bcb!(res, ψ, p)
-    res[1] = ψ[1]
+    res[1] = ψ[1] # ψ(L) = 0
 end
 
-guess(p, t) = [cos(π*t / (2*L)); -sin(π*t / (2*L))] # initial guess of [ψ, ψ'], notice this satisfies the BCs exactly
+guess(p, t) = [exp(-t^2 / 2); -t * exp(-t^2 / 2)]  # initial guess is a Gaussian
+# ψ0 = [1.13037; 0.0]
 
-bvp = TwoPointBVProblem(schrodinger!, (bca!, bcb!), guess, tspan, [4.1],
-    bcresid_prototype = (zeros(1), zeros(1)), fit_parameters = true)
+bvp = TwoPointBVProblem(schrodinger!, (bca!, bcb!), guess, tspan, [4.2],
+    bcresid_prototype=(zeros(1), zeros(1)), fit_parameters=true)
 
-sol = solve(bvp, MIRK4(), dt = 0.05)
-
-plot(sol.t, sol[1,:], label=L"$\psi(x)$", xticks=-L:5:L, lw=2)
+# sol = solve(bvp, MIRK4(), dt=0.05)
+sol = solve(bvp, MIRK6(), dt=0.05, reltol=1e-8, abstol=1e-10)
 
 sol.prob.p
+
+plot(sol.t, sol[1, :], label=L"$\psi(x)$", xlabel=L"$x$", ylabel=L"$\psi$",
+    xticks=-L:5:L, lw=2)
