@@ -1,26 +1,20 @@
-using BoundaryValueDiffEq, OrdinaryDiffEq, Plots, LaTeXStrings
+using BoundaryValueDiffEq, Plots, LaTeXStrings
 
-L = 15.0
+L = 10.0
 tspan = (0.0, L)
 F(t) = tanh(t)
-Fp(t) = sech(t)^2
 Fpp(t) = -2 * tanh(t) * sech(t)^2
 
 k = 0.5
-S = 200
+S = 100
 γ_guess = S^(-2/5)
 
-# System of first-order ODEs
-# state vector: ψ, φ, ψ', φ'
 function tearing!(du, u, p, t)
     ψ, φ, ψp, φp = u
-    # parameters
-    γ = p[1]
-
     du[1] = ψp
     du[2] = φp
-    du[3] = (S*γ+k^2)*ψ - S*γ*F(t)*φ
-    du[4] = k^2*φ - (F(t)*γ^(-2))*du[3] + γ^(-2)*(F(t)*k^2 + Fpp(t))*ψ
+    du[3] = (S*p[1]+k^2)*ψ - S*p[1]*F(t)*φ
+    du[4] = (-F(t)/p[1]^2)*(du[3]-k^2*ψ - Fpp(t)*ψ/F(t)) + k^2*φ
 end
 
 function bca!(res, u, p)
@@ -34,24 +28,27 @@ function bcb!(res, u, p)
 end
 
 function initial_guess(p, t)
-    [exp(-t^2); t * exp(-t^2); -2 * t * exp(-t^2); (1 - 2 * t^2) * exp(-t^2)]
+    [exp(-k*t) + F(t)/k; 
+    1/t;
+    -k * exp(-k*t);
+    -1/t^2]
 end
 
 bvp = TwoPointBVProblem(
-    tearing!, 
-    (bca!, bcb!), 
-    initial_guess, 
-    tspan, 
-    [γ_guess], 
-    bcresid_prototype=(zeros(2), zeros(2)), 
+    tearing!,
+    (bca!, bcb!),
+    initial_guess,
+    tspan,
+    [γ_guess],
+    bcresid_prototype=(zeros(2), zeros(2)),
     fit_parameters=true
-    )
-    
+)
+
 # Solve
-sol = solve(bvp, MIRK6(), dt=0.01, reltol=1e-8, abstol=1e-8)
+sol = solve(bvp, MIRK3(), dt=0.05)
 
 # print the estimated value of γ which satisfies the BCs
-println("γ: ", sol.prob.p[1])
+γ = sol.prob.p[1]
 
-plot(sol, idxs=(0, 1), label=L"ψ(t)", continuity=:right, lw=2)
-plot!(sol, idxs=(0, 2), label=L"φ(t)", xlabel="t", legend=:topright, continuity=:right, lw=2)
+plot(sol, idxs=(0, 1), label=L"ψ(t)", continuity=:right)
+plot!(sol, idxs=(0, 2), label=L"φ(t)", xlabel="t", legend=:topright, continuity=:right)
