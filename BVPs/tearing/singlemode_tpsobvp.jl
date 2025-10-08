@@ -11,7 +11,7 @@ ddf(t) = -2 * tanh(t) * sech(t)^2
 k = 0.5
 S = 100
 ε = S^(-2/3)
-Q_guess = 0.26706479450097753 # Q -> 1 is the NCF limit where γ = S^(-1/3), CF limit is Q << 1
+Q_guess = 0.26706479450097753 # Q -> 1 is the NCF limit where γ = S^(-1/3) Q, CF limit is Q << 1
 
 function tearing!(ddu, du, u, p, t)
     ψ, ϕ = u

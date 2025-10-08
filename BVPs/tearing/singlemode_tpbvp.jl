@@ -11,7 +11,7 @@ ddf(t) = -2 * tanh(t) * sech(t)^2
 k = 0.5
 S = 100
 ε = S^(-2/3)
-Q_guess = 0.2670647945400131 # Q -> 1 is the NCF limit where γ = S^(-1/3), CF limit is Q << 1
+Q_guess = 0.2670647945400131 # Q -> 1 is the NCF limit where γ = S^(-1/3) Q, CF limit is Q << 1
 
 function tearing!(du, u, p, t)
     ψ, ϕ, ψ1, ϕ1 = u
@@ -50,7 +50,8 @@ bvp = TwoPointBVProblem(
 
 # Solve
 # sol = solve(bvp, MIRK6(; jac_alg = BVPJacobianAlgorithm(AutoForwardDiff())), dt=0.01)
-sol = solve(bvp, MIRK4(), dt=0.01)
+# @time sol = solve(bvp, RadauIIa5(), dt=0.01)
+@time sol = solve(bvp, MIRK4(), dt=0.01)
 
 # print the estimated value of γ which satisfies the BCs
 Q = sol.prob.p[1]

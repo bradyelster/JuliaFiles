@@ -22,13 +22,13 @@ end
 guess(p, t) = [exp(-t^2 / 2); -t * exp(-t^2 / 2)]  # initial guess is a Gaussian
 # ψ0 = [1.13037; 0.0]
 
-bvp = TwoPointBVProblem(schrodinger!, (bca!, bcb!), guess, tspan, [4.2],
-    bcresid_prototype=(zeros(1), zeros(1)), fit_parameters=true)
+bvp = TwoPointBVProblem(schrodinger!, (bca!, bcb!), guess, tspan, [0.5],
+    bcresid_prototype=(zeros(1), zeros(1)), fit_parameters=false)
 
 # sol = solve(bvp, MIRK4(), dt=0.05)
-sol = solve(bvp, MIRK6(), dt=0.05, reltol=1e-8, abstol=1e-10)
+sol = solve(bvp, MIRK6(), dt=0.5, reltol=1e-8, abstol=1e-10)
 
 sol.prob.p
 
 plot(sol.t, sol[1, :], label=L"$\psi(x)$", xlabel=L"$x$", ylabel=L"$\psi$",
-    xticks=-L:5:L, lw=2)
+    xticks=-L:1:L, lw=2)
