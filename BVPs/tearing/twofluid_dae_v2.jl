@@ -129,20 +129,22 @@ function bc!(res, u, p, t)
     res[2] = u[1][8]       # ψm-1'(0)=0, Dirichlet on right boundary (even)
     res[3] = u[1][12]      # ψm+1'(0)=0, Dirichlet on right boundary (even)
     res[4] = u[1][3]       # ϕm(0)=0,    Dirichlet on left boundary (odd)
-    res[5] = u[1][1]       # ϕm-1(0)=0,  Dirichlet on left boundary (odd)
-    res[6] = u[1][5]       # ϕm+1(0)=0,  Dirichlet on left boundary (odd)
-    #res[7] = u[1][9] - 1   # ψm(0) = 1:  extra constraint to fix unknown parameter Q
+    #res[5] = u[1][1]       # ϕm-1(0)=0,  Dirichlet on left boundary (odd)
+    #res[6] = u[1][5]       # ϕm+1(0)=0,  Dirichlet on left boundary (odd)
+    res[5] = u[1][2]       # ϕm-1'(0)=0,  Dirichlet on left boundary (odd)
+    res[6] = u[1][6]       # ϕm+1'(0)=0,  Dirichlet on left boundary (odd)
+    res[7] = u[1][9] - 1   # ψm(0) = 1:  extra constraint to fix unknown parameter Q
     
     # RIGHT BOUNDARY (x=L)
-    res[7] = u[end][9]     # ψm(L)=0,    Dirichlet on right boundary
-    res[8] = u[end][7]     # ψm-1(L)=0,  Dirichlet on right boundary
-    res[9] = u[end][11]   # ψm+1(L)=0,  Dirichlet on right boundary
-    res[10] = u[end][3]    # ϕm(L)=0,    Dirichlet on right boundary
-    res[11] = u[end][1]    # ϕm-1(L)=0,  Dirichlet on right boundary
-    res[12] = u[end][5]    # ϕm+1(L)=0,  Dirichlet on right boundary
-    res[13] = u[end][4]    # ϕm'(L)=0,   Neumann on right boundary
-    res[14] = u[end][2]    # ϕm-1'(L)=0, Neumann on right boundary
-    res[15] = u[end][6]    # ϕm+1'(L)=0, Neumann on right boundary
+    res[8] = u[end][9]     # ψm(L)=0
+    res[9] = u[end][7]     # ψm-1(L)=0
+    res[10] = u[end][11]   # ψm+1(L)=0
+    res[11] = u[end][3]    # ϕm(L)=0
+    res[12] = u[end][1]    # ϕm-1(L)=0
+    res[13] = u[end][5]    # ϕm+1(L)=0
+    res[14] = u[end][4]    # ϕm'(L)=0
+    res[15] = u[end][2]    # ϕm-1'(L)=0
+    res[16] = u[end][6]    # ϕm+1'(L)=0
 end
 
 function initial_guess(p, t)
@@ -179,7 +181,7 @@ fun = BVPFunction(tftearing!, bc!, mass_matrix = mass_matrix, bcresid_prototype=
 prob = BVProblem(fun, initial_guess, tspan, [Q_guess], fit_parameters=true)
 
 # Try coarser initial dt
-@time sol = solve(prob, MIRK4(), dt=0.05, save_everystep=false, verbose=true, maxiters=1000)
+@time sol = solve(prob, MIRK4(), dt=0.01, abstol=1e-6, reltol=1e-4)
 
 # print the estimated value of Q which satisfies the BCs
 #println(sol.prob.p[1])

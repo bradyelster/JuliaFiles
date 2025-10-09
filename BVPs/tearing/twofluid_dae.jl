@@ -135,7 +135,7 @@ end
 
 fun = BVPFunction(tftearing!, bc!, mass_matrix = mass_matrix, bcresid_prototype=zeros(16))
 prob = BVProblem(fun, initial_guess, tspan, [Q_guess], fit_parameters=true)
-sol = solve(prob, MIRK4(), dt=0.01, save_everystep=false, verbose=true, maxiters=1000)
+sol = solve(prob, MIRK4(), dt=0.01, save_everystep=false, verbose=true, maxiters=100)
 
 # print the estimated value of Q which satisfies the BCs
 println(sol.prob.p[1])

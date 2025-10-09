@@ -3,23 +3,23 @@
 
 using BoundaryValueDiffEq, Plots, LaTeXStrings
 
-L = 12.0
+L = 20.0
 tspan = (0.0, L)
 f(t) = tanh(t)
 ddf(t) = -2 * tanh(t) * sech(t)^2
 
 k = 0.5
-S = 100
-ε = S^(-2/3)
-Q_guess = 0.2670647945400131 # Q -> 1 is the NCF limit where γ = S^(-1/3) Q, CF limit is Q << 1
+S = 500
+ε = S^(-2 / 3)
+Q_guess = 0.22837351282048415 # Q -> 1 is the NCF limit where γ = S^(-1/3) Q, CF limit is Q << 1
 
 function tearing!(du, u, p, t)
     ψ, ϕ, ψ1, ϕ1 = u
     Q = p[1]
     du[1] = ψ1
     du[2] = ϕ1
-    du[3] = (Q/ε + k^2)*ψ - (f(t)/ε)*ϕ
-    du[4] = (ddf(t)/(Q*ε) - f(t)/ε^2)*ψ + (f(t)^2/(Q*ε^2) + k^2)*ϕ
+    du[3] = (Q / ε + k^2) * ψ - (f(t) / ε) * ϕ
+    du[4] = (ddf(t) / (Q * ε) - f(t) / ε^2) * ψ + (f(t)^2 / (Q * ε^2) + k^2) * ϕ
 end
 
 function bca!(res, u, p)
