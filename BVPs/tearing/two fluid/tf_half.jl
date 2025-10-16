@@ -1,7 +1,7 @@
 # Tearing Mode - Numerical Solution, 10/03/2025
 # Two-Fluid Tearing Equations, DAE Solution
 
-using BoundaryValueDiffEq, LinearAlgebra, Plots, LaTeXStrings
+using BoundaryValueDiffEq, LinearAlgebra, Plots, LaTeXStrings, SparseArrays
 
 const L = 12.0
 tspan = (0.0, L)
@@ -86,11 +86,11 @@ mass_matrix[13:15, 13:15] = C
 function bca!(res, u, p)
     # LEFT BOUNDARY (x=0)
     res[1] = u[10]      # ψm'(0)=0,   Dirichlet on right boundary (even)
-    res[2] = u[8]       # ψm-1'(0)=0, Dirichlet on right boundary (even)
-    res[3] = u[12]      # ψm+1'(0)=0, Dirichlet on right boundary (even)
+    res[2] = u[7]       # ψm-1(0)=0, Dirichlet on right boundary (odd)
+    res[3] = u[11]      # ψm+1(0)=0, Dirichlet on right boundary (odd)
     res[4] = u[3]       # ϕm(0)=0,    Dirichlet on left boundary (odd)
-    res[5] = u[1]       # ϕm-1(0)=0,  Dirichlet on left boundary (odd)
-    res[6] = u[5]       # ϕm+1(0)=0,  Dirichlet on left boundary (odd)
+    res[5] = u[2]       # ϕm-1'(0)=0,  Dirichlet on left boundary (even)
+    res[6] = u[6]       # ϕm+1'(0)=0,  Dirichlet on left boundary (even)
     res[7] = u[9] - 1  # ψm(0) = 1:  extra constraint to fix unknown parameter Q
 end
 
@@ -115,36 +115,37 @@ function initial_guess(p, t)
     ϕ2 = t * (-6 + 4t^2) * exp(-t^2)
 
     return [
-        ϕ;    # phm0
-        ϕ1;   # phm1
-        ϕ;    # ph0
-        ϕ1;   # ph1
-        ϕ;    # php0
-        ϕ1;   # php1
-        ψ;    # psm0
-        ψ1;   # psm1
-        ψ;    # ps0
-        ψ1;   # ps1
-        ψ;    # psp0
-        ψ1;   # psp1
-        ϕ2;   # phm2
-        ϕ2;   # ph2
-        ϕ2    # php2
+        ϕ;    # phm0, even
+        ϕ1;   # phm1, odd
+        ϕ;    # ph0, odd
+        ϕ1;   # ph1, even
+        ϕ;    # php0, even
+        ϕ1;   # php1, odd
+        ψ;    # psm0, odd
+        ψ1;   # psm1, even
+        ψ;    # ps0, even
+        ψ1;   # ps1, odd
+        ψ;    # psp0, odd
+        ψ1;   # psp1, even
+        ϕ2;   # phm2, even
+        ϕ2;   # ph2, odd
+        ϕ2    # php2, even
     ]
 end
 
-u0 = [0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0]
+u0 = [1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1];
 
 fun = BVPFunction(tftearing!, (bca!, bcb!), mass_matrix=mass_matrix, twopoint=Val(true), bcresid_prototype=(zeros(7), zeros(9)))
 prob = TwoPointBVProblem(fun, u0, tspan, [Q_guess], fit_parameters=true)
 
 sol = solve(prob, MIRK6(), dt=0.01,
     adaptive=true,
-    progress=true
+    progress=true,
+    verbose=true
 )
 
 # print the estimated value of Q which satisfies the BCs
-println("γ fitted: 0", sol.prob.p[1])
+println("γ fitted: ", sol.prob.p[1])
 
 #plot(sol, idxs=(0, 9), label=L"ψ(x)")
 #plot!(sol, idxs=(0, 3), label=L"φ(x)", xlabel="x", legend=:topright)
