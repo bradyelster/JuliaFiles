@@ -2,19 +2,16 @@
 # Single Helicity Mode, TwoPointBVProblem, Optimized
 
 using BoundaryValueDiffEq, Plots, LaTeXStrings
-using StaticArrays # for performance
 
-L = 15.0
+const L = 15.0
 tspan = (0.0, L)
-# Use @inline for small functions
-@inline f(t) = tanh(t)
+f(t) = tanh(t)
 
 # m = 2
 k = 0.5
 # k0 = 0.25
-S = 1000
-# ε = S^(-2 / 3)
-γ_guess = 0.001325864736286539 # 0.025988534151142495 for non-resonant mode @ S=100, k = 0.5 
+S = 200
+γ_guess = 0.04245424189095258 # 0.025988534151142495 for non-resonant mode @ S=100, k = 0.5 
 # 0.26706478858674904*S^(-1/3) for resonant mode with different normalization
 
 function tearing!(du, u, p, t)
@@ -24,7 +21,7 @@ function tearing!(du, u, p, t)
     du[1] = ψ1
     du[2] = ϕ1
     du[3] = (-S * k * f(t)) * ϕ + (S * γ - k^2) * ψ
-    du[4] = ((k^2 * S * f(t)^2) / γ) * ϕ - (k * f(t) / γ) * (-2 * k^2 + S*γ + 2 * sech(t)^2) * ψ
+    du[4] = ((k^2 * S * f(t)^2) / γ) * ϕ - (k * f(t) / γ) * (-2 * k^2 + S * γ + 2 * sech(t)^2) * ψ
 end
 
 function bca!(res, u, p)
@@ -42,7 +39,7 @@ end
 function initial_guess(p, t)
     exp_t2 = exp(-t^2)
     t_exp = t * exp_t2
-    SVector(exp_t2, t_exp, -2 * t_exp, (1 - 2 * t^2) * exp_t2)
+    return [exp_t2, t_exp, -2 * t_exp, (1 - 2 * t^2) * exp_t2]
 end
 
 bvp = TwoPointBVProblem(
@@ -55,7 +52,12 @@ bvp = TwoPointBVProblem(
     fit_parameters=true
 )
 
-sol = solve(bvp, MIRK4(), dt=0.01, saveat=0.5, verbose=true)
+sol = solve(bvp, MIRK5(), dt=0.01,
+    adaptive=false,
+    saveat=0.5,
+    verbose=true,
+    progress=true
+)
 
 # print the estimated value of γ which satisfies the BCs
 sol.prob.p[1]
