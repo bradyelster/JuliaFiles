@@ -3,7 +3,7 @@
 
 using BoundaryValueDiffEq, LinearAlgebra, Plots, LaTeXStrings, SparseArrays
 
-const L = 12.0
+const L = 15.0
 tspan = (0.0, L)
 f(t) = tanh(t)
 
@@ -37,10 +37,10 @@ S = 100
 ε = S^(-2 / 3)
 
 # Growth rate
-Q_guess = 0.267
+Q_guess = 0.353 # from last run, # 0.267 # from single mode, half domain
 
 # Alfvénic Mach number
-M = S^(-1 / 2)
+M = 0.001 # S^(-1 / 2)
 
 function tftearing!(du, u, p, t)
     phm0, phm1,
@@ -91,7 +91,7 @@ function bca!(res, u, p)
     res[4] = u[3]       # ϕm(0)=0,    Dirichlet on left boundary (odd)
     res[5] = u[2]       # ϕm-1'(0)=0,  Dirichlet on left boundary (even)
     res[6] = u[6]       # ϕm+1'(0)=0,  Dirichlet on left boundary (even)
-    res[7] = u[9] - 1  # ψm(0) = 1:  extra constraint to fix unknown parameter Q
+    res[7] = u[9] - 1   # ψm(0) = 1,  extra constraint to fix unknown parameter Q
 end
 
 function bcb!(res, u, p)
@@ -108,44 +108,46 @@ function bcb!(res, u, p)
 end
 
 function initial_guess(p, t)
-    ψ = exp(-t^2)
-    ψ1 = -2t * exp(-t^2)
-    ϕ = t * exp(-t^2)
-    ϕ1 = (1 - 2t^2) * exp(-t^2)
-    ϕ2 = t * (-6 + 4t^2) * exp(-t^2)
+    evenpsi = exp(-t^2)
+    oddpsi = -2t * exp(-t^2)
+    oddphi = t * exp(-t^2)
+    evenphi = (1 - 2t^2) * exp(-t^2)
 
     return [
-        ϕ;    # phm0, even
-        ϕ1;   # phm1, odd
-        ϕ;    # ph0, odd
-        ϕ1;   # ph1, even
-        ϕ;    # php0, even
-        ϕ1;   # php1, odd
-        ψ;    # psm0, odd
-        ψ1;   # psm1, even
-        ψ;    # ps0, even
-        ψ1;   # ps1, odd
-        ψ;    # psp0, odd
-        ψ1;   # psp1, even
-        ϕ2;   # phm2, even
-        ϕ2;   # ph2, odd
-        ϕ2    # php2, even
+        evenphi;    # phm0, even
+        oddphi;   # phm1, odd
+        oddphi;    # ph0, odd
+        evenphi;   # ph1, even
+        evenphi;    # php0, even
+        oddphi;   # php1, odd
+        oddpsi;    # psm0, odd
+        evenpsi;   # psm1, even
+        evenpsi;    # ps0, even
+        oddpsi;   # ps1, odd
+        oddpsi;    # psp0, odd
+        evenpsi;   # psp1, even
+        evenphi;   # phm2, even
+        oddphi;   # ph2, odd
+        evenphi    # php2, even
     ]
 end
 
-u0 = [1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1];
+# u0 = [1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1];
 
 fun = BVPFunction(tftearing!, (bca!, bcb!), mass_matrix=mass_matrix, twopoint=Val(true), bcresid_prototype=(zeros(7), zeros(9)))
-prob = TwoPointBVProblem(fun, u0, tspan, [Q_guess], fit_parameters=true)
+prob = TwoPointBVProblem(fun, initial_guess, tspan, [γ_guess], fit_parameters=true)
 
 sol = solve(prob, MIRK6(), dt=0.01,
-    adaptive=true,
+    adaptive=false,
     progress=true,
-    verbose=true
+    verbose=true,
+    maxiters=500
 )
 
 # print the estimated value of Q which satisfies the BCs
-println("γ fitted: ", sol.prob.p[1])
+println("Q fitted: ", sol.prob.p[1])
 
-#plot(sol, idxs=(0, 9), label=L"ψ(x)")
-#plot!(sol, idxs=(0, 3), label=L"φ(x)", xlabel="x", legend=:topright)
+plot(sol, idxs=(0, 9), label=L"ψ(x)")
+plot!(sol, idxs=(0, 3), label=L"φ(x)", xlabel="x", legend=:topright)
+
+plot(sol)
