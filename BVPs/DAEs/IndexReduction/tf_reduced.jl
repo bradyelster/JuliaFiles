@@ -141,10 +141,10 @@ function initial_guess(p, t)
     oddphi_t = (1 - 2t^2) * exp(-t^2)         # derivative of oddφ is even
 
     # For higher derivatives, we’ll keep same parity trend but simplified (still smooth)
-    evenphi_tt  = evenphi   # even stays even for 2nd derivative
+    evenphi_tt = evenphi   # even stays even for 2nd derivative
     evenphi_ttt = oddphi    # odd for 3rd derivative
-    oddphi_tt   = evenphi
-    oddphi_ttt  = oddphi
+    oddphi_tt = evenphi
+    oddphi_ttt = oddphi
 
     # Now assign according to your new state vector
     return [
@@ -167,23 +167,23 @@ function initial_guess(p, t)
 end
 
 # Convert MTK model to numerical residual
-odefun = ODEFunction(tfmodel)
-mass_matrix = calculate_massmatrix(tfmodel)
+odeprob = ODEProblem(tfmodel, [], tspan, guesses = [γ = 0.01])
+# mass_matrix = calculate_massmatrix(tfmodel)
 
-# Construct Boundary Value Function
-fun = BVPFunction(odefun;
-    bc = (bca!, bcb!),
-    mass_matrix = mass_matrix,
-    twopoint = Val(true),
-    bcresid_prototype = (zeros(7), zeros(9))
+# Construct Boundary Value Problem
+
+
+#=
+prob = ODEroblem(tfmodel,
+    bc=(bca!, bcb!),
+    initial_guess, tspan, [γ_guess],
+    mass_matrix=mass_matrix,
+    twopoint=Val(true),
+    bcresid_prototype=(zeros(7), zeros(9), fit_parameters=true)
 )
-
-# Define and solve the BVP
-γ_guess = 0.01
-p = [γ_guess]
-prob = TwoPointBVProblem(fun, initial_guess, tspan, p; fit_parameters = true)
 
 sol = solve(prob, GeneralMIRK4(), dt=0.1, maxiters=100, verbose=true)
 
 plot(sol)
 println("Estimated γ = ", sol.param_estimates[1])
+=#
