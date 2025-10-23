@@ -27,7 +27,7 @@ function tearing!(du, u, p, t)
     du[4] = ((ddf(t) - f(t) * S * γ) / γ^2) * ψ + ((k^2 * γ^2 + S * γ * f(t)^2) / γ^2) * ϕ
 end
 
-# initial state vector at t=-L
+# initial state vector at t=0
 u0 = [1.0, 0.0, 0.01, 1.0]
 
 function bca!(res, u, p)
@@ -53,6 +53,8 @@ println("γ = ", sol.prob.p[1])
 
 plot(sol, idxs=(0, 1), label=L"ψ(t)", lw=2)
 plot!(sol, idxs=(0, 2), label=L"φ(t)", xlabel="t", legend=:best, lw=2)
+
+sol.u[1]
 
 # Extract time and solution arrays
 t_half = sol.t
