@@ -1,7 +1,6 @@
 using BoundaryValueDiffEq, LinearAlgebra, Plots
 
-const L = 15.0
-# tspan = (0.0, L) # half-domain
+const L = 20.0
 tspan = (-L, L) # full-domain
 
 f(t) = tanh(t)
@@ -37,21 +36,21 @@ Kp2 = kp^2 + kn^2
 ζy = 1
 
 # Lundquist number
-S = 100
+S = 10
 
 # Alfvénic Mach number
 M = S^(-1 / 2)
 
 function tftearing!(du, u, p, t)
     # parameter to fit: γ
-    γ = p[1]
+    # γ = p[1]
 
     # state vector elements
     ψp, φp, ψ,
     ψp1, ψm, ψ1,
     ψm1, φm, φ,
     φ1, φ2, φp1,
-    φm1, φ3, φm3 = u
+    φm1, φ3, φm3, γ = u
 
     # helper functions/"observables"
     ψp3 = ((Kp2 / S) * ψp1 + γ * ψp1 - ky * (1 + m) * df(t) * φp - ky * (1 + (1 + m) * f(t)) * φp1 + 0.5 * M * S * ((K2 / S) * ψ + 0.5 * M * (ψp1 + ψm1) + γ * ψ - k * f(t) * φ)) * S
@@ -74,9 +73,10 @@ function tftearing!(du, u, p, t)
     du[13] = (-1 / γ) * (-Km2 * γ * φ1 + 0.5 * M * (φ3 + (-Km2 + ζz^2 * ky^2) * φ1) + (-ddfoverf(t) * ψm - Km2 * ψm + S * (Km2 * ψm / S + 0.5 * M * ψ1 + ψm * γ - ky * (-1 + (-1 + m) * f(t)) * φm)) * ky * (-1 + (-1 + m) * f(t)))
     du[14] = (-1 / 0.5 * M) * (-(φm3 + Km2 * φm1) * γ - (dddfoverf(t) * ψm + ddfoverf(t) * ψm1 - ddfdfoverf2(t) * ψm - ψm3 + Km2 * ψm1) * ky * (-1 + (-1 + m) * f(t)) + 0.5 * M * (-Km2 + ζz^2 * ky^2) * φ2 + (ddfoverf(t) * ψm + Km2 * ψm + S * (-Km2 * ψm / S - 0.5 * M * ψ1 - γ * ψm + ky * (-1 + (-1 + m) * f(t)) * φm)) * ky * (1 - m) * df(t))
     du[15] = (-φp3 + Kp2 * φp1) * γ + ((-ddfdfoverf2(t) * ψp) - ψp3 + (dddfoverf(t) * ψp + ddfoverf(t) * ψp1) + Kp2 * ψp1) * ky * (1 + (1 + m) * f(t)) - 0.5 * M * (-(-φm3 + Km2 * φm1) * γ - ((dddfoverf(t) * ψm + ddfoverf(t) * ψm1) + (-ψm * ddfdfoverf2(t) - ψm3 + Km2 * ψm1) * ky * (-1 + (-1 + m) * f(t)) + 0.5 * M * (-Km2 + (ky^2) * (ζz^2)) * φ2 + (ψm * ddfoverf(t) + Km2 * ψm + S * ((-Km2 * ψm) / S - 0.5 * M * ψ1 - ψm * γ + ky * (-1 + (-1 + m) * f(t)) * φm)) * ky * (1 - m) * df(t)) / (0.5 * M) + (-Kp2 + (ky^2) * (ζz^2)) * φ2) + (ddfoverf(t) * ψp + Kp2 * ψp + S * ((-Kp2 * ψp) / S - 0.5 * M * ψ1 - ψp * γ + ky * (1 + (1 + m) * f(t)) * φp)) * ky * (1 + m) * df(t)
+    du[16] = 0
 end
 
-mat = Matrix{Float64}(I, 15, 15)  # creates a 15×15 identity matrix
+mat = Matrix{Float64}(I, 16, 16)  # creates a 15×15 identity matrix
 mat[15, 15] = 0                   # set the last element to 0
 
 function bc!(res, u, p, t)
@@ -95,13 +95,14 @@ function bc!(res, u, p, t)
     res[13] = u(0.0)[4]    # ψm+1'(0) = 0,  even
     res[14] = u(0.0)[6]    # ψm'(0) = 0,  even
     res[15] = u(0.0)[7]    # ψm-1'(0) = 0,  even
+    res[16] = u(L)[9] - 1  # normalization on ψm 
 end
 
-u0 = zeros(15)
+u0 = zeros(16)
 
-γ_guess = 0.01
-fun = BVPFunction(tftearing!, bc!; mass_matrix=mat, bcresid_prototype=zeros(15))
-prob = BVProblem(fun, u0, tspan, [γ_guess], fit_parameters=true)
+γ_guess = 0.12
+fun = BVPFunction(tftearing!, bc!; mass_matrix=mat, bcresid_prototype=zeros(16))
+prob = BVProblem(fun, u0, tspan)
 
 sol = solve(prob, MIRK6(), dt=0.01,
     adaptive=true,

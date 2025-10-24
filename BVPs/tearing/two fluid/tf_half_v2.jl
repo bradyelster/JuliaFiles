@@ -33,7 +33,7 @@ Kp2 = kp^2 + kn^2
 ζy = 1
 
 # Lundquist number
-S = 100
+S = 10
 
 # Growth rate
 γ_guess = 0.0575

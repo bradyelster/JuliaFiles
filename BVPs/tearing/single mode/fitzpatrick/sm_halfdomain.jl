@@ -1,9 +1,9 @@
 # Tearing Mode Numerical Solution
-# Full Domain (-L, L) w/ Fitzpatrick's Normalizations
+# Fitzpatrick's Normalizations
 
 using BoundaryValueDiffEq, Plots, LaTeXStrings
 
-const L = 15.0
+const L = 20.0
 tspan = (0.0, L)
 @inline f(t) = tanh(t)
 @inline ddf(t) = -2 * tanh(t) * sech(t)^2
@@ -43,7 +43,7 @@ end
 
 bvp = TwoPointBVProblem(tearing!, (bca!, bcb!), u0, tspan, [γ_guess], bcresid_prototype=(zeros(3), zeros(2)), fit_parameters=true)
 
-@time sol = solve(bvp, MIRK4(), dt=0.01,
+@time sol = solve(bvp, MIRK6(), dt=0.01,
     adaptive=true,
     progress=true,
     verbose=true
@@ -64,7 +64,6 @@ u_half = hcat(sol.u...)  # columns correspond to time points
 ψp_half = u_half[3, :]  # ψ'(t)
 ϕp_half = u_half[4, :]  # ϕ'(t)
 
-
 # --- Extend to full domain ---
 # (Don't double count t=0)
 t_full = [-reverse(t_half[2:end]); t_half]
@@ -77,43 +76,5 @@ t_full = [-reverse(t_half[2:end]); t_half]
 final_u = sol.u[end]
 
 # --- plot full-domain extensions ---
-# plot(t_full, ψ_full, label=L"\psi(t)", lw=2, title="Fitzpatrick: Tearing Mode Solution")
+#plot(t_full, ψ_full, label=L"\psi(t)", lw=2, title="Fitzpatrick: Tearing Mode Solution")
 # plot!(t_full, ϕ_full, label=L"\phi(t)", lw=2, xlabel="x", legend=:best)
-
-# --- START FULL DOMAIN SOLUTION ATTEMPT --- #
-tspan2 = (-L, L)
-γ_guess2 = sol.prob.p[1] # use guess from half-domain solution
-
-# guess = [ψ_full, ϕ_full, ψp_full, ϕp_full]
-
-function bca2!(res, u, p)
-    res[1] = u[1]
-    res[2] = u[2]
-end
-
-function bcb2!(res, u, p)
-    res[1] = u[1] # - ψouter(L) # ψ(L) ≈ 0
-    res[2] = u[2] # - ϕouter(L) # ϕ(L) ≈ 0
-end
-
-bvp2 = TwoPointBVProblem(
-    BVPFunction(tearing!, (bca2!, bcb2!); twopoint=Val(true), bcresid_prototype=(zeros(2), zeros(2))),
-    final_u, tspan2, [γ_guess2], fit_parameters=true
-)
-
-@time sol2 = solve(bvp2, MIRK6(), dt=0.01,
-    reltol=1e-7,
-    abstol=1e-7,
-    adaptive=true,
-    progress=true,
-    verbose=true
-)
-
-println("γ = ", sol2.prob.p[1])
-sol2.prob.p[1] - sol.prob.p[1]
-
-plot(sol2, idxs=(0, 1), label=L"ψ(t)", lw=2)
-plot!(sol2, idxs=(0, 2), label=L"φ(t)", xlabel="t", legend=:best, lw=2)
-
-
-# --- END FULL DOMAIN SOLUTION ATTEMPT --- #
