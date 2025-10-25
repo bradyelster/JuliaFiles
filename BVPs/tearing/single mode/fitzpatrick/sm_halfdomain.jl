@@ -9,7 +9,7 @@ tspan = (0.0, L)
 @inline ddf(t) = -2 * tanh(t) * sech(t)^2
 
 const k = 0.5
-const S = 100
+const S = 1000
 γ_guess = 0.05753900476044987
 
 # provide outer solutions for easier boundary value handling
@@ -37,13 +37,13 @@ function bca!(res, u, p)
 end
 
 function bcb!(res, u, p)
-    res[1] = u[1] # ψ(L) 0 0
-    res[2] = u[2] # ϕ(L) 0 0
+    res[1] = u[1] - ψouter(L) # ψ(L) 0 0
+    res[2] = u[2] - ϕouter(L) # ϕ(L) 0 0
 end
 
-bvp = TwoPointBVProblem(tearing!, (bca!, bcb!), u0, tspan, [γ_guess], bcresid_prototype=(zeros(3), zeros(2)), fit_parameters=true)
+bvp = TwoPointBVProblem(tearing!, (bca!, bcb!), ones(4), tspan, [γ_guess], bcresid_prototype=(zeros(3), zeros(2)), fit_parameters=true)
 
-@time sol = solve(bvp, MIRK6(), dt=0.01,
+@time sol = solve(bvp, MIRK6(), dt=0.1,
     adaptive=true,
     progress=true,
     verbose=true
@@ -51,10 +51,8 @@ bvp = TwoPointBVProblem(tearing!, (bca!, bcb!), u0, tspan, [γ_guess], bcresid_p
 
 println("γ = ", sol.prob.p[1])
 
-plot(sol, idxs=(0, 1), label=L"ψ(t)", lw=2)
-plot!(sol, idxs=(0, 2), label=L"φ(t)", xlabel="t", legend=:best, lw=2)
-
-sol.u[1]
+scatter(sol, idxs=(0, 1), label=L"ψ(t)", lw=2)
+scatter!(sol, idxs=(0, 2), label=L"φ(t)", xlabel="t", legend=:best, lw=2)
 
 # Extract time and solution arrays
 t_half = sol.t
@@ -73,8 +71,11 @@ t_full = [-reverse(t_half[2:end]); t_half]
 ϕp_full = [reverse(ϕp_half[2:end]); ϕp_half]        # ϕ odd  → ϕ' even
 
 # --- Extract final state vector at t = L ---
-final_u = sol.u[end]
+#final_u = sol.u[end]
 
 # --- plot full-domain extensions ---
-#plot(t_full, ψ_full, label=L"\psi(t)", lw=2, title="Fitzpatrick: Tearing Mode Solution")
-# plot!(t_full, ϕ_full, label=L"\phi(t)", lw=2, xlabel="x", legend=:best)
+plot(t_full, ψ_full, label=L"\psi(t)", lw=2, title="Tearing Mode Solution, S = $S")
+plot!(t_full, ϕ_full, label=L"\phi(t)", lw=2, xlabel="x", legend=:best, ls=:dot)
+
+# plot the mesh used by solver
+scatter!(sol.t[1:4:end], zeros(length(sol.t[1:2:end])), markershape=:vline, label="mesh", ylims=(-5.1, 5.1), xlims=(-10, 10))
