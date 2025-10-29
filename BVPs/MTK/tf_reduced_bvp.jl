@@ -45,7 +45,7 @@ Kp2 = kp^2 + kn^2
 S = 10
 
 # Alfvénic Mach number
-M = S^(-1 / 2)
+M = 1e-4 # S^(-1 / 2)
 
 function tftearing!(du, u, p, t)
     # parameter to fit: γ
@@ -82,7 +82,7 @@ function tftearing!(du, u, p, t)
 end
 
 mat = Matrix{Float64}(I, 15, 15)  # creates a 15×15 identity matrix
-mat[15, 15] = 0                   # set the last element to 0
+mat[15, 15] = 0           # set the last element to 0
 
 function bc!(res, u, p, t)
     # ψp, φp, ψ,
@@ -103,13 +103,16 @@ function bc!(res, u, p, t)
     res[10] = u(L)[9]     # ϕm(L)=0,    Dirichlet on right boundary
     res[11] = u(L)[8]     # ϕm-1(L)=0,  Dirichlet on right boundary
     res[12] = u(L)[2]     # ϕm+1(L)=0,  Dirichlet on right boundary
-    res[13] = u(0.0)[6]   # ψm'(0) = 0, ψm even
-    res[14] = u(0.0)[9]   # ϕm(L) = 0,  ϕm odd
-    res[15] = u(0.0)[3] - 1  # normalization on ψm 
+    res[13] = u(-L)[13] # ϕm-1'(-L) = 0
+    res[14] = u(-L)[10] # ϕm'(-L) = 0
+    res[14] = u(-L)[12] # ϕm+1'(-L) = 0
+    #res[13] = u(0.0)[6]   # ψm'(0) = 0, ψm even
+    #res[14] = u(0.0)[9]   # ϕm(L) = 0,  ϕm odd
+    #res[15] = u(0.0)[3] - 1  # normalization on ψm 
 end
 
 u0 = [0.0, 0.0, 0.0,
-    -0.001, 0.0, 0.001,
+    0.001, 0.0, 0.001,
     0.0, 0.0, 0.0,
     0.001, 0.0, 0.001,
     0.001, 0.0, 0.0]

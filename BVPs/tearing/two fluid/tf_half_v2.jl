@@ -5,8 +5,8 @@ using Plots
 const L = 15.0
 tspan = (0.0, L)
 @inline f(t) = tanh(t)
-@inline ddfoverf(t) = -2 * sech(t)^2 
-@inline safe_ddfoverf(t) = t < 1e-6 ? -2 + 4/3 * t^2 : ddfoverf(t)
+@inline ddfoverf(t) = -2 * sech(t)^2
+@inline safe_ddfoverf(t) = t < 1e-6 ? -2 + 4 / 3 * t^2 : ddfoverf(t)
 
 # mode numbers of interest
 m, n = 2, 1
