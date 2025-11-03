@@ -76,13 +76,13 @@ function tftearing!(du, u, p, t)
     du[12] = (-1 / γ) * (-Kp2 * γ * φ1 + 0.5 * M * (φ3 + (-Kp2 + ζz^2 * ky^2) * φ1) + (-safe_ddfoverf(t) * ψp - Kp2 * ψp + S * (Kp2 * ψp / S + 0.5 * M * ψ1 + ψp * γ - ky * (1 + (1 + m) * safe_f(t)) * φp)) * ky * (1 + (1 + m) * safe_f(t)))
     du[13] = (-1 / γ) * (-Km2 * γ * φ1 + 0.5 * M * (φ3 + (-Km2 + ζz^2 * ky^2) * φ1) + (-safe_ddfoverf(t) * ψm - Km2 * ψm + S * (Km2 * ψm / S + 0.5 * M * ψ1 + ψm * γ - ky * (-1 + (-1 + m) * safe_f(t)) * φm)) * ky * (-1 + (-1 + m) * safe_f(t)))
     du[14] = (-1 / 0.5 * M) * (-(φm3 + Km2 * φm1) * γ - (safe_dddfoverf(t) * ψm + safe_ddfoverf(t) * ψm1 - safe_ddfdfoverf2(t) * ψm - ψm3 + Km2 * ψm1) * ky * (-1 + (-1 + m) * safe_f(t)) + 0.5 * M * (-Km2 + ζz^2 * ky^2) * φ2 + (safe_ddfoverf(t) * ψm + Km2 * ψm + S * (-Km2 * ψm / S - 0.5 * M * ψ1 - γ * ψm + ky * (-1 + (-1 + m) * safe_f(t)) * φm)) * ky * (1 - m) * df(t))
-    du[15] = (-φp3 + Kp2 * φp1) * γ + ((-safe_ddfdfoverf2(t) * ψp) - ψp3 + (safe_dddfoverf(t) * ψp + safe_ddfoverf(t) * ψp1) + Kp2 * ψp1) * ky * (1 + (1 + m) * safe_f(t)) - 0.5 * M * (-(-φm3 + Km2 * φm1) * γ - ((safe_dddfoverf(t) * ψm + safe_ddfoverf(t) * ψm1) + (-ψm * safe_ddfdfoverf2(t) - ψm3 + Km2 * ψm1) * ky * (-1 + (-1 + m) * safe_f(t)) + 0.5 * M * (-Km2 + (ky^2) * (ζz^2)) * φ2 + (ψm * safe_ddfoverf(t) + Km2 * ψm + S * ((-Km2 * ψm) / S - 0.5 * M * ψ1 - ψm * γ + ky * (-1 + (-1 + m) * safe_f(t)) * φm)) * ky * (1 - m) * df(t)) / (0.5 * M) + (-Kp2 + (ky^2) * (ζz^2)) * φ2) + (safe_ddfoverf(t) * ψp + Kp2 * ψp + S * ((-Kp2 * ψp) / S - 0.5 * M * ψ1 - ψp * γ + ky * (1 + (1 + m) * safe_f(t)) * φp)) * ky * (1 + m) * df(t)
-    du[16] = 0 # γ'(t) = 0
-    du[17] = abs2(ψ) # x(t) = ∫ |z(s)|^2 ds; x(0) = -L, x(L) = 1
+    du[15] = 0 # γ'(t) = 0
+    du[16] = abs2(ψ) # x(t) = ∫ |z(s)|^2 ds; x(0) = -L, x(L) = 1
+    du[17] = (-φp3 + Kp2 * φp1) * γ + ((-safe_ddfdfoverf2(t) * ψp) - ψp3 + (safe_dddfoverf(t) * ψp + safe_ddfoverf(t) * ψp1) + Kp2 * ψp1) * ky * (1 + (1 + m) * safe_f(t)) - 0.5 * M * (-(-φm3 + Km2 * φm1) * γ - ((safe_dddfoverf(t) * ψm + safe_ddfoverf(t) * ψm1) + (-ψm * safe_ddfdfoverf2(t) - ψm3 + Km2 * ψm1) * ky * (-1 + (-1 + m) * safe_f(t)) + 0.5 * M * (-Km2 + (ky^2) * (ζz^2)) * φ2 + (ψm * safe_ddfoverf(t) + Km2 * ψm + S * ((-Km2 * ψm) / S - 0.5 * M * ψ1 - ψm * γ + ky * (-1 + (-1 + m) * safe_f(t)) * φm)) * ky * (1 - m) * df(t)) / (0.5 * M) + (-Kp2 + (ky^2) * (ζz^2)) * φ2) + (safe_ddfoverf(t) * ψp + Kp2 * ψp + S * ((-Kp2 * ψp) / S - 0.5 * M * ψ1 - ψp * γ + ky * (1 + (1 + m) * safe_f(t)) * φp)) * ky * (1 + m) * df(t)
 end
 
 mat = Matrix{Float64}(I, 17, 17)  # creates a 15×15 identity matrix
-mat[15, 15] = 0           # set the last element to 0
+mat[17, 17] = 0           # set the last element to 0
 
 function bc!(res, u, p, t)
     # ψp, φp, ψ,
