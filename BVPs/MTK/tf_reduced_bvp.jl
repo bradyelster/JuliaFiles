@@ -1,6 +1,6 @@
-using BoundaryValueDiffEq, DifferentialEquations, LinearAlgebra, Plots
+using BoundaryValueDiffEq, DifferentialEquations, LinearAlgebra, Plots, SparseArrays
 
-const L = 20.0
+L = 15.0
 tspan = (-L, L) # full-domain
 
 f(t) = tanh(t)
@@ -48,15 +48,13 @@ S = 10
 M = 1e-4 # S^(-1 / 2)
 
 function tftearing!(du, u, p, t)
-    # parameter to fit: γ
-    γ = p[1]
-
     # state vector elements
     ψp, φp, ψ,
     ψp1, ψm, ψ1,
     ψm1, φm, φ,
     φ1, φ2, φp1,
-    φm1, φ3, φm3 = u
+    φm1, φ3, φm3,
+    γ, x = u
 
     # helper functions/"observables"
     ψp3 = ((Kp2 / S) * ψp1 + γ * ψp1 - ky * (1 + m) * df(t) * φp - ky * (1 + (1 + m) * safe_f(t)) * φp1 + 0.5 * M * S * ((K2 / S) * ψ + 0.5 * M * (ψp1 + ψm1) + γ * ψ - k * safe_f(t) * φ)) * S
@@ -79,9 +77,11 @@ function tftearing!(du, u, p, t)
     du[13] = (-1 / γ) * (-Km2 * γ * φ1 + 0.5 * M * (φ3 + (-Km2 + ζz^2 * ky^2) * φ1) + (-safe_ddfoverf(t) * ψm - Km2 * ψm + S * (Km2 * ψm / S + 0.5 * M * ψ1 + ψm * γ - ky * (-1 + (-1 + m) * safe_f(t)) * φm)) * ky * (-1 + (-1 + m) * safe_f(t)))
     du[14] = (-1 / 0.5 * M) * (-(φm3 + Km2 * φm1) * γ - (safe_dddfoverf(t) * ψm + safe_ddfoverf(t) * ψm1 - safe_ddfdfoverf2(t) * ψm - ψm3 + Km2 * ψm1) * ky * (-1 + (-1 + m) * safe_f(t)) + 0.5 * M * (-Km2 + ζz^2 * ky^2) * φ2 + (safe_ddfoverf(t) * ψm + Km2 * ψm + S * (-Km2 * ψm / S - 0.5 * M * ψ1 - γ * ψm + ky * (-1 + (-1 + m) * safe_f(t)) * φm)) * ky * (1 - m) * df(t))
     du[15] = (-φp3 + Kp2 * φp1) * γ + ((-safe_ddfdfoverf2(t) * ψp) - ψp3 + (safe_dddfoverf(t) * ψp + safe_ddfoverf(t) * ψp1) + Kp2 * ψp1) * ky * (1 + (1 + m) * safe_f(t)) - 0.5 * M * (-(-φm3 + Km2 * φm1) * γ - ((safe_dddfoverf(t) * ψm + safe_ddfoverf(t) * ψm1) + (-ψm * safe_ddfdfoverf2(t) - ψm3 + Km2 * ψm1) * ky * (-1 + (-1 + m) * safe_f(t)) + 0.5 * M * (-Km2 + (ky^2) * (ζz^2)) * φ2 + (ψm * safe_ddfoverf(t) + Km2 * ψm + S * ((-Km2 * ψm) / S - 0.5 * M * ψ1 - ψm * γ + ky * (-1 + (-1 + m) * safe_f(t)) * φm)) * ky * (1 - m) * df(t)) / (0.5 * M) + (-Kp2 + (ky^2) * (ζz^2)) * φ2) + (safe_ddfoverf(t) * ψp + Kp2 * ψp + S * ((-Kp2 * ψp) / S - 0.5 * M * ψ1 - ψp * γ + ky * (1 + (1 + m) * safe_f(t)) * φp)) * ky * (1 + m) * df(t)
+    du[16] = 0 # γ'(t) = 0
+    du[17] = abs2(ψ) # x(t) = ∫ |z(s)|^2 ds; x(0) = -L, x(L) = 1
 end
 
-mat = Matrix{Float64}(I, 15, 15)  # creates a 15×15 identity matrix
+mat = Matrix{Float64}(I, 17, 17)  # creates a 15×15 identity matrix
 mat[15, 15] = 0           # set the last element to 0
 
 function bc!(res, u, p, t)
@@ -103,26 +103,26 @@ function bc!(res, u, p, t)
     res[10] = u(L)[9]     # ϕm(L)=0,    Dirichlet on right boundary
     res[11] = u(L)[8]     # ϕm-1(L)=0,  Dirichlet on right boundary
     res[12] = u(L)[2]     # ϕm+1(L)=0,  Dirichlet on right boundary
-    res[13] = u(-L)[13] # ϕm-1'(-L) = 0
-    res[14] = u(-L)[10] # ϕm'(-L) = 0
-    res[14] = u(-L)[12] # ϕm+1'(-L) = 0
-    #res[13] = u(0.0)[6]   # ψm'(0) = 0, ψm even
-    #res[14] = u(0.0)[9]   # ϕm(L) = 0,  ϕm odd
-    #res[15] = u(0.0)[3] - 1  # normalization on ψm 
+    #res[13] = u(-L)[13] # ϕm-1'(-L) = 0
+    #res[14] = u(-L)[10] # ϕm'(-L) = 0
+    #res[15] = u(-L)[12] # ϕm+1'(-L) = 0
+    res[13] = u(0.0)[6]   # ψm'(0) = 0, ψm even
+    res[14] = u(0.0)[9]   # ϕm(0) = 0,  ϕm odd
+    #res[15] = u(0.0)[3] - 1  # normalization on ψm
+    res[15] = u(-L)[17]
+    res[16] = u(L)[17] - 1
 end
 
 u0 = [0.0, 0.0, 0.0,
     0.001, 0.0, 0.001,
     0.0, 0.0, 0.0,
     0.001, 0.0, 0.001,
-    0.001, 0.0, 0.0]
+    0.001, 0.0, 0.0, 0.123, 0.0]
 
-γ_guess = 0.0575
+fun = BVPFunction(tftearing!, bc!; mass_matrix=mat, bcresid_prototype=zeros(16))
+prob = BVProblem(fun, u0, tspan)
 
-fun = BVPFunction(tftearing!, bc!; mass_matrix=mat, bcresid_prototype=zeros(15))
-prob = BVProblem(fun, u0, tspan, [γ_guess], fit_parameters=true)
-
-sol = solve(prob, MIRK6(), dt=0.05) # still unstable, ARGGHH!!!
+sol = solve(prob, MIRK4(), dt=0.05, tstops=[0.0])
 
 plot(sol, idxs=(0, 3), label="ψ")
 plot!(sol, idxs=(0, 9), label="φ")
