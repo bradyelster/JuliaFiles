@@ -47,6 +47,7 @@ plot!(sol, idxs=(0, 2), label=L"φ(t)", xlabel="t", legend=:best, lw=2, title="�
 # plot the (reduced) mesh used by solver
 scatter!(sol.t[1:4:end], zeros(length(sol.t[1:4:end])), markershape=:vline, color="lightgray", label="mesh")
 
+#=
 # plot more physically relevant quantities 
 x = sol.t                # radial coordinate (your independent var)
 ψ = [u[1] for u in sol.u]  # magnetic flux eigenfunction
@@ -91,3 +92,4 @@ plot!(sol, idxs=(0, 2), label=L"φ(x)",
     xlabel="x",
     ylabel="y"
 )
+=#

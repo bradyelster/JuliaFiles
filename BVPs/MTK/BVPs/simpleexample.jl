@@ -4,7 +4,7 @@
 using ModelingToolkit, BoundaryValueDiffEq, Plots
 using ModelingToolkit: t_nounits as t, D_nounits as D
 
-@variables y(..)
+@variables y(t::Real)::Real
 eq = [D(D(y(t))) ~ y(t)]
 
 # right boundary condition treated as constraint 
@@ -20,5 +20,5 @@ bvpsys = mtkcompile(bvp)
 # pass uncertain parameters/initial conditions to solver via `guesses` so it knows it can change them
 prob = BVProblem(bvpsys, [y(t) => 1], (0.0, 1.0), guesses=[D(y(t)) => 0.0])
 sol = solve(prob, MIRK4(), dt=0.01)
-p = plot(sol)
+plot(sol)
 # savefig(p, "bvp_exam.png")
