@@ -7,8 +7,8 @@ f(t) = tanh(t)
 g(t) = -2 * sech(t)^2
 
 # mode numbers of interest
-m = 2
-n = 1
+m = 3
+n = 2
 
 # device parameters
 R0 = 1
@@ -65,8 +65,7 @@ function bcb!(res, u, p)
     res[3] = u[5] - 1
 end
 
-fun = BVPFunction(sideband!, (bca!, bcb!); bcresid_prototype=(zeros(3), zeros(3)), twopoint=Val(true))
-prob = BVProblem(fun, u0, tspan)
+prob = TwoPointBVProblem(sideband!, (bca!, bcb!); bcresid_prototype=(zeros(3), zeros(3)), u0, tspan)
 
 @time sol = solve(prob, MIRK6(), dt=0.08, tstops=[0.0])
 
