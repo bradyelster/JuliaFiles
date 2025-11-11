@@ -3,10 +3,15 @@
 
 using BoundaryValueDiffEq, Plots, LaTeXStrings
 
-L = 25.0
+L = 15.0
 tspan = (-L, L)
-@inline f(t) = tanh(t)
-@inline ddf(t) = -2 * tanh(t) * sech(t)^2
+# Define the functions to plot
+#f_mplus(t) = kp * (1 + 0.1*f(t)) - kn * Bz
+#f_mminus(t) = km * (1 + 0.1*f(t)) - kn * Bz
+#f_m(t) = k * (1 + 0.1*f(t)) - kn * Bz
+
+@inline f(t) = 0.1 * tanh(t)
+@inline ddf(t) = -2 * 0.1 * tanh(t) * sech(t)^2
 
 # mode numbers of interest
 m = 2
@@ -33,7 +38,7 @@ Kp2 = kp^2 # + kn^2
 # Lundquist number
 S = 10
 
-function fundamental!(du, u, p, t)
+function sideband!(du, u, p, t)
     ψ, ψ1, ϕ, ϕ1, x, γ = u
     du[1] = ψ1
     du[2] = S * γ * ψ - S * k * f(t) * ϕ + K2 * ψ
@@ -58,16 +63,17 @@ function bcb!(res, u, p)
     res[3] = u[5] - 1
 end
 
-bvp = TwoPointBVProblem(fundamental!, (bca!, bcb!), u0, tspan, bcresid_prototype=(zeros(3), zeros(3)))
+bvp = TwoPointBVProblem(sideband!, (bca!, bcb!), u0, tspan, bcresid_prototype=(zeros(3), zeros(3)))
 
-@time sol = solve(bvp, MIRK4(), dt=0.1, tstops=[-0.346574])
+@time sol = solve(bvp, MIRK4(), dt=0.05)
 
 γ_found = round(sol.u[1][6], digits=4)
 
-plot(sol, idxs=(0, 1), label=L"ψ(t)", lw=2)
-plot!(sol, idxs=(0, 3), label=L"φ(t)", xlabel="t", legend=:best, lw=2, title="γ = $γ_found")
+plot(sol, idxs=(0, 1), label=L"ψ(x)", lw=2)
+plot!(sol, idxs=(0, 3), label=L"φ(x)", xlabel="x", legend=:best, lw=2, title="γ = $γ_found")
 # plot the (reduced) mesh used by solver
 scatter!(sol.t[1:4:end], zeros(length(sol.t[1:4:end])), markershape=:vline, color="lightgray", label="mesh")
+plot!(sol.t, f.(sol.t), label="mag. field profile")
 
 #=
 # plot more physically relevant quantities 

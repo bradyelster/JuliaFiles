@@ -3,50 +3,51 @@
 
 using BoundaryValueDiffEq, Plots, LaTeXStrings
 
-const L = 15.0
+L = 15.0
 tspan = (-L, L)
 @inline f(t) = tanh(t)
 @inline ddf(t) = -2 * tanh(t) * sech(t)^2
 
-const k = 0.5
-const S = 10
+k = 1.1 # Harris sheet is unstable only for k ∈ (0, 1), stable for k > 1. 
+S = 10
 
 function tearing!(du, u, p, t)
-    ψ, ϕ, ψ1, ϕ1, γ, x = u
+    ψ, ϕ, ψ1, ϕ1, x, γ = u
     du[1] = ψ1
     du[2] = ϕ1
     du[3] = (S * γ + k^2) * ψ - (S * γ * f(t)) * ϕ
     du[4] = ((ddf(t) - f(t) * S * γ) / γ^2) * ψ + ((k^2 * γ^2 + S * γ * f(t)^2) / γ^2) * ϕ
-    du[5] = 0
-    du[6] = abs2(ψ) # x(t) = |ψ|^2
+    #du[4] = -f(t)*du[3]/γ^2 + (k^2/γ^2)*ψ + (ddf(t)/γ^2)*ψ
+    du[5] = abs2(ψ) # x(t) = |ψ|^2
+    du[6] = 0
 end
 
 # initial state vector at t=-L, informed from half-domain solution
-u0 = [1e-5, 1e-5, 0.001, 0.001, 0.1, 0.0]
+u0 = [1e-5, 1e-5, 0.001, 0.001, 0.0, -0.123]
 
 function bca!(res, u, p)
     res[1] = u[1] # - ψouter(-L) # ψ(-L) ≈ 0
     res[2] = u[2] # - ϕouter(-L) # ϕ(-L) ≈ 0
-    res[3] = u[6]
+    res[3] = u[5]
 end
 
 function bcb!(res, u, p)
     res[1] = u[1] # - ψouter(-L) # ψ(-L) ≈ 0
     res[2] = u[2] #- ϕouter(-L) # ϕ(-L) ≈ 0
-    res[3] = u[6] - 1
+    res[3] = u[5] - 1
 end
 
 bvp = TwoPointBVProblem(tearing!, (bca!, bcb!), u0, tspan, bcresid_prototype=(zeros(3), zeros(3)))
 
-@time sol = solve(bvp, MIRK4(), dt=0.1, tstops=[0.0])
+@time sol = solve(bvp, MIRK4(), dt=0.01, tstops=[0.0])
 
-γ_found = round(sol.u[1][5], digits=4)
+γ_found = round(sol.u[1][6], digits=4)
 
 plot(sol, idxs=(0, 1), label=L"ψ(t)", lw=2)
 plot!(sol, idxs=(0, 2), label=L"φ(t)", xlabel="t", legend=:best, lw=2, title="γ = $γ_found")
 # plot the (reduced) mesh used by solver
 scatter!(sol.t[1:4:end], zeros(length(sol.t[1:4:end])), markershape=:vline, color="lightgray", label="mesh")
-
+#savefig("fitzpatrick_S10.png")
 #=
 # plot more physically relevant quantities 
 x = sol.t                # radial coordinate (your independent var)

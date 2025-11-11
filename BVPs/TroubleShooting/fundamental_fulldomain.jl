@@ -5,8 +5,8 @@ using BoundaryValueDiffEq, Plots, LaTeXStrings
 
 L = 15.0
 tspan = (-L, L)
-@inline f(t) = tanh(t)
-@inline g(t) = -2 * sech(t)^2
+@inline f(t) = 0.1*tanh(t)
+@inline g(t) = -2 * 0.1*sech(t)^2
 
 # mode numbers of interest
 m = 2
@@ -58,7 +58,7 @@ end
 
 bvp = TwoPointBVProblem(fundamental!, (bca!, bcb!), u0, tspan, bcresid_prototype=(zeros(3), zeros(3)))
 
-@time sol = solve(bvp, MIRK4(), dt=0.1, tstops=[0.0])
+@time sol = solve(bvp, MIRK4(), dt=0.01, tstops=[0.0])
 
 γ_found = round(sol.u[1][6], digits=4)
 

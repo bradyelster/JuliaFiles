@@ -42,3 +42,8 @@ bvp = TwoPointBVProblem(tearing!, (bca!, bcb!), u0, tspan, bcresid_prototype=(ze
 plot(sol, idxs=(0, 1), label=L"ψ(t)", lw=2)
 plot!(sol, idxs=(0, 2), label=L"φ(t)", xlabel="t", legend=:best, lw=2, title="γ = $γ_found")
 scatter!(sol.t[1:4:end], zeros(length(sol.t[1:4:end])), markershape=:vline, color="lightgray", label="mesh")
+
+#savefig("bl2018.png")
+
+# flip signs of ψ and φ
+#plot(sol, x -> -x)
