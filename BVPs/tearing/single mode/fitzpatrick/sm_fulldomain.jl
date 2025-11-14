@@ -1,8 +1,7 @@
 # Tearing Mode Numerical Solution
 # Full Domain (-L, L) w/ Fitzpatrick's Normalizations
 
-using BoundaryValueDiffEq, Plots, LaTeXStrings
-using NonlinearSolve, SparseArrays
+using BoundaryValueDiffEq, Plots
 
 L = 15.0
 tspan = (-L, L)
@@ -24,7 +23,7 @@ function tearing!(du, u, p, t)
 end
 
 # initial state vector at t=-L, informed from half-domain solution
-u0 = [1e-5, 1e-5, 0.001, 0.001, 0.0, 0.123]
+sol = [1e-5, 1e-5, 0.001, 0.001, 0.0, 0.123]
 
 function bca!(res, u, p)
     res[1] = u[1] # - ψouter(-L) # ψ(-L) ≈ 0
@@ -38,18 +37,27 @@ function bcb!(res, u, p)
     res[3] = u[5] - 1
 end
 
-bvp = TwoPointBVProblem(tearing!, (bca!, bcb!), u0, tspan, bcresid_prototype=(zeros(3), zeros(3)))
-
-@time sol = solve(bvp, MIRK4(), dt=0.05, tstops=[0.0])
+bvp = TwoPointBVProblem(tearing!, (bca!, bcb!), sol, tspan, bcresid_prototype=(zeros(3), zeros(3)))
+sol = solve(bvp, MIRK4(), dt=0.1, tstops=[0.0])
 
 γ_found = round(sol.u[1][6], digits=4)
 
-plot(sol, idxs=(0, 1), label=L"ψ(t)", lw=2)
-plot!(sol, idxs=(0, 2), label=L"φ(t)", xlabel="t", legend=:best, lw=2, title="γ = $γ_found")
-# plot the (reduced) mesh used by solver
-scatter!(sol.t[1:4:end], zeros(length(sol.t[1:4:end])), markershape=:vline, color="lightgray", label="mesh")
-#savefig("fitzpatrick_S10.png")
+plot(sol, idxs=(0, 1), label="", lw=2, lc="black")
+plot!(sol, idxs=(0, 2), label="", xlabel="", lw=2, lc=RGB(34 / 255, 88 / 255, 52 / 255))
+scatter!(
+    sol.t[1:4:end],
+    zeros(length(sol.t[1:4:end])),
+    markershape=:vline,
+    color="black",
+    label="",
+    background_color=:transparent,
+    dpi=300,
+    legend=:false
+)
 
+savefig("fitzpatrick_S10_v2.png")
+
+#=
 # plot more physically relevant quantities 
 x = sol.t                # radial coordinate (your independent var)
 ψ = [u[1] for u in sol.u]  # magnetic flux eigenfunction
@@ -87,7 +95,6 @@ plot!(sol, idxs=(0, 2), label=L"φ(x)",
     ylabel="y"
 )
 
-#=
 plot!(sol,
     idxs=(0, 1),
     label=L"ψ(x)",

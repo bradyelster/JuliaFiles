@@ -1,15 +1,7 @@
 # This example is from Strogatz's online course on Asymptotic Methods
 # found here: https://www.youtube.com/watch?v=UiO0Y_eFVQY&list=PL5EH0ZJ7V0jV7kMYvPcZ7F9oaf_YAlfbI&index=13
 
-using BoundaryValueDiffEq, Plots, BenchmarkTools
-
-#=
-# the following doesn't do anything?
-using ProgressLogging, TerminalLoggers
-import Logging: global_logger
-import TerminalLoggers: TerminalLogger
-global_logger(TerminalLogger())
-=#
+using BoundaryValueDiffEq, Plots
 
 function ode!(du, u, p, t)
     du[1] = u[2]
@@ -41,4 +33,4 @@ for i in 1:2
 end
 
 plot(sol, idxs=(0, 1), label="ε = $eps", lw=2, xlabel="x", ylabel="y(x)", legend=:best, xlims=(0, 50 * eps))
-vline!([ε], lw=2, linestyle=:dash, label="δ")
+#vline!([ε], lw=2, linestyle=:dash, label="δ")
